@@ -1,10 +1,20 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express"
+import AppError from "../config/error"
 
-export default function errorHandler (error: any, req: Request, res: Response, next: NextFunction) {
-  console.log(error);
-  if (error.response) {
-    return res.sendStatus(error.response.status);
-  }
+function errorHandler(
+	error: any,
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	const { log, statusCode, message, detail } = error
 
-  res.sendStatus(500);
+	return error instanceof AppError
+		? res.status(statusCode).send({ message, detail })
+		: res.status(500).send({
+				message: `Internal server error`,
+				detail: error,
+		  });
 }
+
+export default errorHandler
