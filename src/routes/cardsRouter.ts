@@ -1,8 +1,7 @@
 import { Router } from "express"
-import { CreateCard } from "../controllers/cardsController"
+import * as cardsController from "../controllers/cardsController"
 
 const cardsRouter = Router()
-
-cardsRouter.post('/cards', CreateCard)
+cardsRouter.post("/card", cardsController.CreateCard)
 
 export default cardsRouter 
