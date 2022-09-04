@@ -24,7 +24,16 @@ export async function CreateCard(
     const cardData = GenerateCardData(employeeId, fullName, typeCard)  
     await cardsRepository.CreateCard(cardData)
 
-    return cardData
+    const { cardCvv } = CreateCardSecurityCode()
+    const { number, cardholderName, cardExpirationDate, type } = cardData
+
+    return {
+        number,
+        cardholderName, 
+        cardCvv,
+        cardExpirationDate,
+        type
+    }
 }
 
 export function GenerateCardData
@@ -33,7 +42,7 @@ export function GenerateCardData
     typeCard: TransactionTypes){
 
     const cardNumber = CreateCardNumber()
-    const securityCode =  CreateCardSecurityCode()
+    const { securityCode } =  CreateCardSecurityCode()
     const cardholderName = CreateCardholderName(fullName)
     const cardExpirationDate = CreateCardExpirationDate()
     const cardData : Card = { 
@@ -60,7 +69,7 @@ export function CreateCardSecurityCode(){
     const cardCvv : string = faker.finance.creditCardCVV()    
     const cryptr = new Cryptr("SecretKey");    
     const securityCode: string = cryptr.encrypt(cardCvv)
-    return securityCode
+    return { cardCvv , securityCode }
 }
 
 export function CreateCardholderName(fullName: string){
@@ -97,4 +106,20 @@ export function CreateCardExpirationDate(){
     const cardExpirationDate : string = dayjs(date).add(expirationCardDate, "year").format("MM/YY") //getCardExpirationDate
     
     return cardExpirationDate
+}
+
+export async function ActivateCard(
+    number : string, 
+    securityCode : string,
+    password : string){
+
+    const cryptr = new Cryptr("SecretKey");    
+    const passwordCrypt: string = cryptr.encrypt(password)
+
+    await validationService.ValidateCard(number, securityCode)
+
+    const result = await cardsRepository.ActivateCard(number, passwordCrypt)
+
+    return result
+
 }

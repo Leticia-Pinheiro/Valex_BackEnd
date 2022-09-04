@@ -48,3 +48,34 @@ export async function CreateCard(cardData: Card){
 		]
     )
 }
+
+export async function ValidateCard(
+	number: string){
+
+	const result = await connection.query(
+    `
+    SELECT * FROM cards 
+    WHERE number = $1    
+    `,[number]
+  )
+	
+  return result.rows[0]
+}
+
+export async function ActivateCard(
+  number: string, 
+  passwordCrypt: string){
+
+    const result = await connection.query(
+      `
+      UPDATE cards 
+      SET password = $1
+      WHERE number = $2
+      `,
+      [passwordCrypt, number]
+    )
+
+    return result
+
+    
+}

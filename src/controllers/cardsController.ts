@@ -9,5 +9,13 @@ export async function CreateCard(req: Request, res: Response){
     const cardData = await cardsService.CreateCard(companyApiKey, typeCard, employeeId)
     
     res.send(cardData).status(200)   
+}
 
+export async function ActivateCard(req: Request, res: Response){
+    const { number, securityCode, password } 
+    : { number : string, securityCode : string, password: string } = req.body
+
+    const result = await cardsService.ActivateCard(number, securityCode, password)
+    
+    res.send(result).status(200)
 }

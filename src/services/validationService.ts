@@ -3,6 +3,13 @@ import * as employeesRepository from "../repositories/employeesRepository"
 import * as companiesRepository from "../repositories/companiesRepository"
 import { TransactionTypes } from "../utils/types"
 import AppError from "../utils/error"
+import Cryptr from "cryptr"
+
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
+
+dayjs.extend(customParseFormat);
+
 
 export async function ValidateApiKey(companyApiKey : string){
     const result = await companiesRepository.SeachByApiKey(companyApiKey)
@@ -51,4 +58,54 @@ export async function ValidateRegisteredEmployee(id: number, companyId: number){
 			"Inform a valid company employee"
 		);
     }
+}
+
+export async function ValidateCard(
+	number: string,
+	securityCode: string){
+		console.log(securityCode)
+
+	const cardData = await cardsRepository.ValidateCard(number)
+	
+	const cryptr = new Cryptr("SecretKey");    
+    const securityCodeDecrypt: string = cryptr.decrypt(cardData.securityCode)
+	console.log(securityCodeDecrypt)
+
+	if(securityCode !== securityCodeDecrypt){		
+		throw new AppError(
+			"Incorrect security code",
+			404,
+			"Incorrect security code",
+			"Ensure to provide the correct card informations"
+		);
+	}
+
+	if(!cardData){
+		throw new AppError(
+			"Card not found",
+			404,
+			"Card not found",
+			"Ensure to provide the correct card informations"
+		);
+	}
+
+	
+	if (cardData.password){
+		throw new AppError(
+			"Card already activated",
+			404,
+			"Card already activated",
+			"Card has already been activated"
+		);
+	}
+
+	if(dayjs(new Date()).isAfter(dayjs(cardData.expirationDate, "MM/YY"))){
+		throw new AppError(
+			"Card expired",
+			409,
+			"This card has expired",
+			"Ensure to provide a valid card ID"
+		);
+	}
+	
 }

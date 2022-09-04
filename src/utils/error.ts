@@ -1,8 +1,8 @@
 class AppError {
-	log: string;
-	statusCode: number;
-	message: string;
-	detail: string;
+	log: string
+	statusCode: number
+	message: string
+	detail: string
 
 	constructor(
 		log: string = "Something went wrong",
@@ -10,10 +10,10 @@ class AppError {
 		message: string = "Something went wrong",
 		detail: string = "An unexpected error occurred"
 	) {
-		this.log = log;
-		this.statusCode = statusCode;
-		this.message = message;
-		this.detail = detail;
+		this.log = log
+		this.statusCode = statusCode
+		this.message = message
+		this.detail = detail
 	}
 }
 
