@@ -139,3 +139,25 @@ export async function GetBalance(cardId: number){
   )
   return balance.rows[0]
 }
+
+export async function BlockCard(number: string){
+  const result = await connection.query(
+    `
+    UPDATE cards 
+    SET "isBlocked" = true
+    WHERE number = $1
+    `, [number]
+  )
+  return result
+}
+
+export async function UnlockCard(number: string){
+  const result = await connection.query(
+    `
+    UPDATE cards 
+    SET "isBlocked" = false
+    WHERE number = $1
+    `, [number]
+  )
+  return result
+}

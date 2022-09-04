@@ -120,7 +120,76 @@ export async function ValidateCardById(cardId: number){
 			"Card not found",
 			"Ensure to provide the correct card informations"
 		);
+	}	
+}
+
+export async function ValidateCardToBlockOrUnlock(number: string){
+	const cardData = await cardsRepository.ValidateCardByNumber(number)
+
+	if(!cardData){
+		throw new AppError(
+			"Card not found",
+			404,
+			"Card not found",
+			"Ensure to provide the correct card informations"
+		);
 	}
 
-	
+	if(dayjs(new Date()).isAfter(dayjs(cardData.expirationDate, "MM/YY"))){
+		throw new AppError(
+			"Card expired",
+			409,
+			"This card has expired",
+			"Ensure to provide a valid card ID"
+		);
+	}
+
+	return cardData
+}
+
+export async function ValidateBlockCard(isBlocked: boolean){
+	if(isBlocked === true){
+		throw new AppError(
+			"Blocked Card",
+			409,
+			"Blocked Card",
+			"Card has already been blocked"
+		);
+	}
+}
+
+export async function ValidateUnlockCard(isBlocked: boolean){
+	if(isBlocked === false){
+		throw new AppError(
+			"Unlocked Card",
+			409,
+			"Unlocked Card",
+			"Card has already been unlocked"
+		);
+	}
+}
+
+export async function ValidatePassword(informedPassword: string, password: string ){
+
+	if(!password){
+		throw new AppError(
+			"Incorrect password",
+			404,
+			"Incorrect password",
+			"Ensure to provide the correct card informations"
+		);
+	}
+
+	const cryptr = new Cryptr("SecretKey");    
+    const passwordDecrypt: string = cryptr.decrypt(password)
+	console.log(passwordDecrypt)
+
+	if(informedPassword !== passwordDecrypt){		
+		throw new AppError(
+			"Incorrect password",
+			404,
+			"Incorrect password",
+			"Ensure to provide the correct card informations"
+		);
+	}
 }

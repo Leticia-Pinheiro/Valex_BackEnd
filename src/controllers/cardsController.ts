@@ -27,3 +27,23 @@ export async function GetTransactions(req: Request, res: Response){
 
     res.send(result).status(200)
 }
+
+export async function BlockCard(req: Request, res: Response){
+    const { number, password } :
+    {number: string, password: string} = req.body
+
+    const result = await cardsService.BlockCard(number, password)
+
+    res.send(result).status(200)
+
+}
+
+export async function UnlockCard(req: Request, res: Response){
+    const { number, password } :
+    {number: string, password: string} = req.body
+
+    const result = await cardsService.UnlockCard(number, password)
+
+    res.send(result).status(200)
+
+}

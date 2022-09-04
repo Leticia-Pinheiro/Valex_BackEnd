@@ -5,6 +5,7 @@ import ValidateSchema from "../middlewares/validateSchemaMiddleware"
 import CardSchema from "../schemas/cardSchema"
 import ActivationCardSchema from "../schemas/activationCardSchema"
 import TransactionSchema from "../schemas/transactionSchema"
+import BlockAndUnlockSchema from "../schemas/blockAndUnlockSchema"
 
 const cardsRouter = Router()
 const endpoint = "/card"
@@ -21,6 +22,18 @@ cardsRouter.put(
 	"/activation",
 	ValidateSchema(ActivationCardSchema, `${endpoint}/activation`),
 	cardsController.ActivateCard
+)
+
+cardsRouter.put(
+	"/block",
+	ValidateSchema(BlockAndUnlockSchema, `${endpoint}/block`),
+	cardsController.BlockCard
+)
+
+cardsRouter.put(
+	"/unlock",
+	ValidateSchema(BlockAndUnlockSchema, `${endpoint}/block`),
+	cardsController.UnlockCard
 )
 
 cardsRouter.get(

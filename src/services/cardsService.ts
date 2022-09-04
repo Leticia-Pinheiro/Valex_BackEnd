@@ -8,6 +8,7 @@ import dayjs from "dayjs"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
 dayjs.extend(customParseFormat)
 
+ 
 
 export async function CreateCard(
     companyApiKey: string, 
@@ -64,8 +65,8 @@ export function CreateCardNumber(){
 }
 
 export function CreateCardSecurityCode(){    
-    const cardCvv : string = faker.finance.creditCardCVV()    
-    const cryptr = new Cryptr("SecretKey");    
+    const cardCvv : string = faker.finance.creditCardCVV() 
+    const cryptr = new Cryptr("SecretKey")        
     const securityCode: string = cryptr.encrypt(cardCvv)
     return { cardCvv , securityCode }
 }
@@ -111,7 +112,7 @@ export async function ActivateCard(
     securityCode : string,
     password : string){
 
-    const cryptr = new Cryptr("SecretKey");    
+    const cryptr = new Cryptr("SecretKey")    
     const passwordCrypt: string = cryptr.encrypt(password)
 
     await validationService.ValidateCardByNumber(number, securityCode)
@@ -136,5 +137,27 @@ export async function GetTransactions(cardId: number){
         "recharges": rechargesData
     }
 
+
+}
+
+export async function BlockCard(number: string, informedPassword: string){
+    const { isBlocked , password }  = await validationService.ValidateCardToBlockOrUnlock(number)
+    await validationService.ValidateBlockCard(isBlocked)
+    await validationService.ValidatePassword(informedPassword, password)
+
+    const result = await cardsRepository.BlockCard(number)
+
+    return result
+
+}
+
+export async function UnlockCard(number: string, informedPassword: string){
+    const { isBlocked , password }  = await validationService.ValidateCardToBlockOrUnlock(number)
+    await validationService.ValidateUnlockCard(isBlocked)
+    await validationService.ValidatePassword(informedPassword, password)
+
+    const result = await cardsRepository.UnlockCard(number)
+
+    return result
 
 }
