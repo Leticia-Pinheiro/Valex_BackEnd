@@ -49,7 +49,7 @@ export async function CreateCard(cardData: Card){
     )
 }
 
-export async function ValidateCard(
+export async function ValidateCardByNumber(
 	number: string){
 
 	const result = await connection.query(
@@ -78,4 +78,64 @@ export async function ActivateCard(
     return result
 
     
+}
+
+
+export async function ValidateCardById(
+	id: number){
+
+	const result = await connection.query(
+    `
+    SELECT * FROM cards 
+    WHERE id = $1    
+    `,[id]
+  )
+	
+  return result.rows[0]
+}
+
+export async function GetRecharges(cardId: number){
+  const rechargesData = await connection.query(
+    `
+    SELECT r.id, r."cardId", r.timestamp, r.amount
+    FROM cards c    
+    JOIN recharges r 
+    ON r."cardId" = c.id    
+    WHERE c.id = $1
+    `, [cardId]
+  )
+
+  return rechargesData.rows
+}
+
+export async function GetTransaction(cardId: number){
+  const transactionsData = await connection.query(
+    `
+    SELECT p.id, p."cardId", p."businessId",
+	  b.name AS "businessName", p.timestamp, p.amount
+	  FROM cards c
+    JOIN payments p 
+    ON p."cardId" = c.id    
+    JOIN businesses b
+    ON p."businessId" = b.id
+    WHERE c.id = $1
+    `, [cardId]
+  )
+
+  return transactionsData.rows
+}
+
+export async function GetBalance(cardId: number){
+  const balance = await connection.query(
+    `
+    SELECT (SELECT COALESCE(SUM(amount),0) 
+    FROM recharges 
+    WHERE "cardId" = $1) -
+    (SELECT COALESCE(SUM(amount),0) 
+    FROM payments WHERE "cardId" = $1) 
+    as balance
+    `,
+    [cardId]    
+  )
+  return balance.rows[0]
 }

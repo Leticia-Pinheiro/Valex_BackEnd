@@ -60,12 +60,12 @@ export async function ValidateRegisteredEmployee(id: number, companyId: number){
     }
 }
 
-export async function ValidateCard(
+export async function ValidateCardByNumber(
 	number: string,
 	securityCode: string){
 		console.log(securityCode)
 
-	const cardData = await cardsRepository.ValidateCard(number)
+	const cardData = await cardsRepository.ValidateCardByNumber(number)
 	
 	const cryptr = new Cryptr("SecretKey");    
     const securityCodeDecrypt: string = cryptr.decrypt(cardData.securityCode)
@@ -107,5 +107,20 @@ export async function ValidateCard(
 			"Ensure to provide a valid card ID"
 		);
 	}
+	
+}
+
+export async function ValidateCardById(cardId: number){
+	const cardData = await cardsRepository.ValidateCardById(cardId)
+
+	if(!cardData){
+		throw new AppError(
+			"Card not found",
+			404,
+			"Card not found",
+			"Ensure to provide the correct card informations"
+		);
+	}
+
 	
 }

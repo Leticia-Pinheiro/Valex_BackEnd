@@ -19,3 +19,11 @@ export async function ActivateCard(req: Request, res: Response){
     
     res.send(result).status(200)
 }
+
+export async function GetTransactions(req: Request, res: Response){
+    const {cardId} : {cardId : number} = req.body
+
+    const result = await cardsService.GetTransactions(cardId)
+
+    res.send(result).status(200)
+}

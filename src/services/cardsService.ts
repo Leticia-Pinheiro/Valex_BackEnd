@@ -58,8 +58,6 @@ export function GenerateCardData
     return cardData
 }
 
-
-
 export function CreateCardNumber(){    
     const cardNumber : string = faker.finance.creditCardNumber("#### #### #### ####") 
     return cardNumber   
@@ -116,10 +114,27 @@ export async function ActivateCard(
     const cryptr = new Cryptr("SecretKey");    
     const passwordCrypt: string = cryptr.encrypt(password)
 
-    await validationService.ValidateCard(number, securityCode)
+    await validationService.ValidateCardByNumber(number, securityCode)
 
     const result = await cardsRepository.ActivateCard(number, passwordCrypt)
 
     return result
+
+}
+
+export async function GetTransactions(cardId: number){
+
+    await validationService.ValidateCardById(cardId)
+
+    const rechargesData = await cardsRepository.GetRecharges(cardId)
+    const transactionData = await cardsRepository.GetTransaction(cardId)
+    const { balance } = await cardsRepository.GetBalance(cardId)
+
+    return {
+        "balance" : balance,
+        "transactions": transactionData,
+        "recharges": rechargesData
+    }
+
 
 }
