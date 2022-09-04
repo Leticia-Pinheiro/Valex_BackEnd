@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 
-import AppError from "../config/error"
+import AppError from "../utils/error"
 
 function HeaderMiddleware(header: string, endpoint: string) {
 	return (req: Request, res: Response, next: NextFunction) => {

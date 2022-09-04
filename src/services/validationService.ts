@@ -1,8 +1,8 @@
 import * as cardsRepository from "../repositories/cardsRepository"
 import * as employeesRepository from "../repositories/employeesRepository"
 import * as companiesRepository from "../repositories/companiesRepository"
-import { CardTypes } from "../types/cardTypes"
-import AppError from "../config/error"
+import { TransactionTypes } from "../utils/types"
+import AppError from "../utils/error"
 
 export async function ValidateApiKey(companyApiKey : string){
     const result = await companiesRepository.SeachByApiKey(companyApiKey)
@@ -30,7 +30,7 @@ export async function ValidateEmployeeId(employeeId : number){
 	return result;
 }
 
-export async function ValidateEmployeeHasTypeCard(employeeId: number, typeCard: CardTypes){
+export async function ValidateEmployeeHasTypeCard(employeeId: number, typeCard: TransactionTypes){
     const result = await cardsRepository.SeachByType(employeeId, typeCard)
     if (result) {
 		throw new AppError(
@@ -39,8 +39,7 @@ export async function ValidateEmployeeHasTypeCard(employeeId: number, typeCard: 
 			"Invalid Type Card",
 			"Employee already has this type of card"
 		);
-	}
-	return result;
+	}	
 }
 
 export async function ValidateRegisteredEmployee(id: number, companyId: number){
