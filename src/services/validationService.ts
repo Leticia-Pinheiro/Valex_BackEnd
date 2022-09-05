@@ -10,9 +10,83 @@ import customParseFormat from "dayjs/plugin/customParseFormat.js";
 
 dayjs.extend(customParseFormat);
 
+export async function ValidateToCreateCard(
+	companyApiKey: string, 
+	employeeId: number, 
+	typeCard: TransactionTypes){
 
-export async function ValidateApiKey(companyApiKey : string){
-    const result = await companiesRepository.SeachByApiKey(companyApiKey)
+	const { id } 
+	: { id : number} = await ValidateCompanyApiKey(companyApiKey)  
+	const { fullName, companyId } 
+	: {fullName : string, companyId : number} = await ValidateEmployeeId(employeeId)
+
+	await ValidateCompanyRegisteredEmployee(id, companyId)
+	await ValidateEmployeeHasTypeCard(employeeId, typeCard)
+
+	return { fullName }
+}
+
+export async function ValidateToActivateCard(
+	number: string,
+	securityCode: string){
+
+	console.log(securityCode) //tirar
+	const cardData = await ValidateCardByNumber(number)
+	await ValidateCardSecurityCode(securityCode, cardData.securityCode)
+	await ValidateCardHasPassword(cardData.password)
+	await ValidateCardExpirationDate(cardData.expirationDate)
+}
+
+export async function ValidateToBlockOrUnlockCard(
+	number: string,
+	informedPassword: string){
+
+	const cardData = await ValidateCardByNumber(number)
+	await ValidateCardExpirationDate(cardData.expirationDate)	
+	await ValidateCardHasNoPassword(cardData.password)
+	await ValidateCardPassword(informedPassword, cardData.password)	
+	
+	return cardData
+}
+
+export async function ValidateToBlockCard(
+	isBlocked: boolean){
+
+	if(isBlocked === true){
+		throw new AppError(
+			"Blocked Card",
+			409,
+			"Blocked Card",
+			"Card has already been blocked"
+		);
+	}
+}
+
+export async function ValidateToUnlockCard(
+	isBlocked: boolean){
+		
+	if(isBlocked === false){
+		throw new AppError(
+			"Unlocked Card",
+			409,
+			"Unlocked Card",
+			"Card has already been unlocked"
+		);
+	}
+}
+
+export async function ValidateToGetTransactions(
+	cardId: number){
+
+	await ValidateCardById(cardId)
+}
+
+//-----------------------------------------------------------------
+
+export async function ValidateCompanyApiKey(
+	companyApiKey : string){
+
+    const result = await companiesRepository.SeachCompanyByApiKey(companyApiKey)
 	if (!result) {
 		throw new AppError(
 			"Company not found",
@@ -24,8 +98,10 @@ export async function ValidateApiKey(companyApiKey : string){
 	return result;
 }
 
-export async function ValidateEmployeeId(employeeId : number){
-    const result = await employeesRepository.SeachById(employeeId)
+export async function ValidateEmployeeId(
+	employeeId : number){
+
+    const result = await employeesRepository.SeachEmployeeById(employeeId)
     if (!result) {
 		throw new AppError(
 			"Employee not found",
@@ -37,19 +113,10 @@ export async function ValidateEmployeeId(employeeId : number){
 	return result;
 }
 
-export async function ValidateEmployeeHasTypeCard(employeeId: number, typeCard: TransactionTypes){
-    const result = await cardsRepository.SeachByType(employeeId, typeCard)
-    if (result) {
-		throw new AppError(
-			"Invalid Type Card",
-			404,
-			"Invalid Type Card",
-			"Employee already has this type of card"
-		);
-	}	
-}
-
-export async function ValidateRegisteredEmployee(id: number, companyId: number){
+export async function ValidateCompanyRegisteredEmployee(
+	id: number, 
+	companyId: number){
+		
     if (id !== companyId){
         throw new AppError(
 			"Unregistered employee",
@@ -60,26 +127,26 @@ export async function ValidateRegisteredEmployee(id: number, companyId: number){
     }
 }
 
-export async function ValidateCardByNumber(
-	number: string,
-	securityCode: string){
-		console.log(securityCode)
+export async function ValidateEmployeeHasTypeCard(
+	employeeId: number, 
+	typeCard: TransactionTypes){
 
-	const cardData = await cardsRepository.ValidateCardByNumber(number)
-	
-	const cryptr = new Cryptr("SecretKey");    
-    const securityCodeDecrypt: string = cryptr.decrypt(cardData.securityCode)
-	console.log(securityCodeDecrypt)
-
-	if(securityCode !== securityCodeDecrypt){		
+    const result = await cardsRepository.SeachEmployeeCardByType(employeeId, typeCard)
+    if (result) {
 		throw new AppError(
-			"Incorrect security code",
+			"Invalid Type Card",
 			404,
-			"Incorrect security code",
-			"Ensure to provide the correct card informations"
+			"Invalid Type Card",
+			"Employee already has this type of card"
 		);
-	}
+	}	
+}
 
+export async function ValidateCardByNumber(
+	number: string){	
+
+	const cardData = await cardsRepository.SearchCardByNumber(number)
+	
 	if(!cardData){
 		throw new AppError(
 			"Card not found",
@@ -89,8 +156,31 @@ export async function ValidateCardByNumber(
 		);
 	}
 
-	
-	if (cardData.password){
+	return cardData
+}
+
+export async function ValidateCardSecurityCode(
+	securityCode: string,
+	cardSecurityCode: string){
+
+	const cryptr = new Cryptr("SecretKey");    
+    const securityCodeDecrypt: string = cryptr.decrypt(cardSecurityCode)
+	console.log(securityCodeDecrypt) //tirar
+
+	if(securityCode !== securityCodeDecrypt){		
+		throw new AppError(
+			"Incorrect security code",
+			404,
+			"Incorrect security code",
+			"Ensure to provide the correct card informations"
+		);
+	}
+}
+
+export async function ValidateCardHasPassword(
+	password: string){
+
+	if (password){
 		throw new AppError(
 			"Card already activated",
 			404,
@@ -98,8 +188,25 @@ export async function ValidateCardByNumber(
 			"Card has already been activated"
 		);
 	}
+}
 
-	if(dayjs(new Date()).isAfter(dayjs(cardData.expirationDate, "MM/YY"))){
+export async function ValidateCardHasNoPassword(
+	password: string){
+
+	if(!password){
+		throw new AppError(
+			"Incorrect password",
+			404,
+			"Incorrect password",
+			"Ensure to provide the correct card informations"
+		);
+	}
+}
+
+export async function ValidateCardExpirationDate(
+	expirationDate: string){
+
+	if(dayjs(new Date()).isAfter(dayjs(expirationDate, "MM/YY"))){
 		throw new AppError(
 			"Card expired",
 			409,
@@ -107,11 +214,12 @@ export async function ValidateCardByNumber(
 			"Ensure to provide a valid card ID"
 		);
 	}
-	
 }
 
-export async function ValidateCardById(cardId: number){
-	const cardData = await cardsRepository.ValidateCardById(cardId)
+export async function ValidateCardById(
+	cardId: number){
+		
+	const cardData = await cardsRepository.SearchCardById(cardId)
 
 	if(!cardData){
 		throw new AppError(
@@ -123,66 +231,13 @@ export async function ValidateCardById(cardId: number){
 	}	
 }
 
-export async function ValidateCardToBlockOrUnlock(number: string){
-	const cardData = await cardsRepository.ValidateCardByNumber(number)
-
-	if(!cardData){
-		throw new AppError(
-			"Card not found",
-			404,
-			"Card not found",
-			"Ensure to provide the correct card informations"
-		);
-	}
-
-	if(dayjs(new Date()).isAfter(dayjs(cardData.expirationDate, "MM/YY"))){
-		throw new AppError(
-			"Card expired",
-			409,
-			"This card has expired",
-			"Ensure to provide a valid card ID"
-		);
-	}
-
-	return cardData
-}
-
-export async function ValidateBlockCard(isBlocked: boolean){
-	if(isBlocked === true){
-		throw new AppError(
-			"Blocked Card",
-			409,
-			"Blocked Card",
-			"Card has already been blocked"
-		);
-	}
-}
-
-export async function ValidateUnlockCard(isBlocked: boolean){
-	if(isBlocked === false){
-		throw new AppError(
-			"Unlocked Card",
-			409,
-			"Unlocked Card",
-			"Card has already been unlocked"
-		);
-	}
-}
-
-export async function ValidatePassword(informedPassword: string, password: string ){
-
-	if(!password){
-		throw new AppError(
-			"Incorrect password",
-			404,
-			"Incorrect password",
-			"Ensure to provide the correct card informations"
-		);
-	}
+export async function ValidateCardPassword(
+	informedPassword: string, 
+	password: string ){
 
 	const cryptr = new Cryptr("SecretKey");    
     const passwordDecrypt: string = cryptr.decrypt(password)
-	console.log(passwordDecrypt)
+	console.log(passwordDecrypt) //tirar
 
 	if(informedPassword !== passwordDecrypt){		
 		throw new AppError(

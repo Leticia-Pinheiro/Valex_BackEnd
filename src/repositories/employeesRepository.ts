@@ -1,6 +1,6 @@
 import connection from "../database/postgres";
 
-export async function SeachById(employeeId: number){
+export async function SeachEmployeeById(employeeId: number){
     const result = await connection.query(
         `
           SELECT * 

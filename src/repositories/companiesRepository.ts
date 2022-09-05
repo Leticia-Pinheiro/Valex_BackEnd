@@ -1,6 +1,6 @@
 import connection from "../database/postgres";
 
-export async function SeachByApiKey(ApiKey: string){
+export async function SeachCompanyByApiKey(ApiKey: string){
     const result = await connection.query(
         `
           SELECT * 

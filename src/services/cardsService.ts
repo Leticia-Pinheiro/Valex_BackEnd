@@ -1,32 +1,24 @@
 import * as cardsRepository from "../repositories/cardsRepository"
 import * as validationService from "./validationService"
 import { TransactionTypes , Card } from "../utils/types"
-import AppError from "../utils/error"
 import { faker } from "@faker-js/faker"
 import Cryptr from "cryptr"
 import dayjs from "dayjs"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
 dayjs.extend(customParseFormat)
 
- 
 
 export async function CreateCard(
     companyApiKey: string, 
     typeCard: TransactionTypes, 
-    employeeId: number){
+    employeeId: number){    
     
-    const companyData = await validationService.ValidateApiKey(companyApiKey)  
-    const employeeData = await validationService.ValidateEmployeeId(employeeId)    
-    const { fullName, companyId } : {fullName: string, companyId: number} = employeeData
-    const { id } : { id: number}= companyData
-    await validationService.ValidateEmployeeHasTypeCard(employeeId, typeCard)  
-    await validationService.ValidateRegisteredEmployee(id, companyId)     
+    const { fullName } = await validationService.ValidateToCreateCard(companyApiKey, employeeId, typeCard)     
     
-    const cardData = GenerateCardData(employeeId, fullName, typeCard)  
-    await cardsRepository.CreateCard(cardData)
-
     const { cardCvv } = CreateCardSecurityCode()
+    const cardData = GenerateCardData(employeeId, fullName, typeCard)
     const { number, cardholderName, cardExpirationDate, type } = cardData
+    await cardsRepository.CreateCard(cardData)
 
     return {
         number,
@@ -37,8 +29,8 @@ export async function CreateCard(
     }
 }
 
-export function GenerateCardData
-    (employeeId : number,
+export function GenerateCardData(
+    employeeId : number,
     fullName: string, 
     typeCard: TransactionTypes){
 
@@ -66,12 +58,14 @@ export function CreateCardNumber(){
 
 export function CreateCardSecurityCode(){    
     const cardCvv : string = faker.finance.creditCardCVV() 
-    const cryptr = new Cryptr("SecretKey")        
+    const cryptr = new Cryptr("SecretKey")            
     const securityCode: string = cryptr.encrypt(cardCvv)
     return { cardCvv , securityCode }
 }
 
-export function CreateCardholderName(fullName: string){
+export function CreateCardholderName(
+    fullName: string){
+
     const regex = /^(d[a,e,o,i])$/
 	const names = fullName.split(" ")    
 	let cardholderName : string = ""
@@ -102,30 +96,60 @@ export function CreateCardholderName(fullName: string){
 export function CreateCardExpirationDate(){
     const expirationCardDate = 5
     const date = new Date()    
-    const cardExpirationDate : string = dayjs(date).add(expirationCardDate, "year").format("MM/YY") //getCardExpirationDate
-    
+    const cardExpirationDate : string = dayjs(date).add(expirationCardDate, "year").format("MM/YY")
     return cardExpirationDate
 }
+
+//------------------------------------------------------------------------
 
 export async function ActivateCard(
     number : string, 
     securityCode : string,
     password : string){
 
+    await validationService.ValidateToActivateCard(number, securityCode)
+
     const cryptr = new Cryptr("SecretKey")    
     const passwordCrypt: string = cryptr.encrypt(password)
 
-    await validationService.ValidateCardByNumber(number, securityCode)
+    await cardsRepository.ActivateCard(number, passwordCrypt)
 
-    const result = await cardsRepository.ActivateCard(number, passwordCrypt)
+    return "Card activated successfully"
+}
 
-    return result
+//------------------------------------------------------------------------
+
+export async function BlockCard(
+    number: string, 
+    informedPassword: string){
+
+    const { isBlocked } = await validationService.ValidateToBlockOrUnlockCard(number, informedPassword)
+    await validationService.ValidateToBlockCard(isBlocked)    
+
+    await cardsRepository.BlockCard(number)
+
+    return "Card blocked successfully"
+}
+
+export async function UnlockCard(
+    number: string, 
+    informedPassword: string){
+
+    const { isBlocked } = await validationService.ValidateToBlockOrUnlockCard(number, informedPassword)
+    await validationService.ValidateToUnlockCard(isBlocked)    
+
+    await cardsRepository.UnlockCard(number)
+
+    return "Card unlocked successfully"
 
 }
 
-export async function GetTransactions(cardId: number){
+//------------------------------------------------------------------------
 
-    await validationService.ValidateCardById(cardId)
+export async function GetTransactions(
+    cardId: number){
+
+    await validationService.ValidateToGetTransactions(cardId)
 
     const rechargesData = await cardsRepository.GetRecharges(cardId)
     const transactionData = await cardsRepository.GetTransaction(cardId)
@@ -136,28 +160,4 @@ export async function GetTransactions(cardId: number){
         "transactions": transactionData,
         "recharges": rechargesData
     }
-
-
-}
-
-export async function BlockCard(number: string, informedPassword: string){
-    const { isBlocked , password }  = await validationService.ValidateCardToBlockOrUnlock(number)
-    await validationService.ValidateBlockCard(isBlocked)
-    await validationService.ValidatePassword(informedPassword, password)
-
-    const result = await cardsRepository.BlockCard(number)
-
-    return result
-
-}
-
-export async function UnlockCard(number: string, informedPassword: string){
-    const { isBlocked , password }  = await validationService.ValidateCardToBlockOrUnlock(number)
-    await validationService.ValidateUnlockCard(isBlocked)
-    await validationService.ValidatePassword(informedPassword, password)
-
-    const result = await cardsRepository.UnlockCard(number)
-
-    return result
-
 }

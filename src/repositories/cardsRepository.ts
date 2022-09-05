@@ -1,20 +1,9 @@
 import connection from "../database/postgres";
 import { TransactionTypes, Card} from "../utils/types"
 
+export async function CreateCard(
+  cardData: Card){
 
-export async function SeachByType(employeeId: number, typeCard: TransactionTypes){
-  const result = await connection.query(
-    `
-      SELECT * FROM cards c
-      JOIN employees e
-      ON e.id = c."employeeId"
-      WHERE e.id = $1 AND c.type = $2         
-    `, [employeeId, typeCard]
-  );
-  return result.rows[0];
-}
-
-export async function CreateCard(cardData: Card){
     const {
       employeeId,
       number,
@@ -30,71 +19,75 @@ export async function CreateCard(cardData: Card){
 
     await connection.query(
       `
-      INSERT INTO cards ("employeeId", number, "cardholderName", "securityCode",
-      "expirationDate", password, "isVirtual", "originalCardId", "isBlocked", type)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-  `,
-		[
-			employeeId,
-			number,
-			cardholderName,
-			securityCode,
-			cardExpirationDate,
-			password,
-			isVirtual,
-			originalCardId,
-			isBlocked,
-			type,
-		]
-    )
-}
-
-export async function ValidateCardByNumber(
-	number: string){
-
-	const result = await connection.query(
-    `
-    SELECT * FROM cards 
-    WHERE number = $1    
-    `,[number]
-  )
-	
-  return result.rows[0]
+      INSERT INTO cards 
+      ("employeeId", 
+      number, 
+      "cardholderName", 
+      "securityCode", 
+      "expirationDate", 
+      password, 
+      "isVirtual", 
+      "originalCardId", 
+      "isBlocked", 
+      type)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `,
+      [
+        employeeId,
+        number,
+        cardholderName,
+        securityCode,
+        cardExpirationDate,
+        password,
+        isVirtual,
+        originalCardId,
+        isBlocked,
+        type,
+      ]
+      )
 }
 
 export async function ActivateCard(
   number: string, 
   passwordCrypt: string){
 
-    const result = await connection.query(
+    await connection.query(
       `
       UPDATE cards 
       SET password = $1
       WHERE number = $2
       `,
       [passwordCrypt, number]
-    )
-
-    return result
-
-    
+    )    
 }
 
-
-export async function ValidateCardById(
-	id: number){
-
-	const result = await connection.query(
+export async function BlockCard(
+  number: string){
+  const result = await connection.query(
     `
-    SELECT * FROM cards 
-    WHERE id = $1    
-    `,[id]
+    UPDATE cards 
+    SET "isBlocked" = true
+    WHERE number = $1
+    `, [number]
   )
-	
-  return result.rows[0]
+  return result
 }
 
-export async function GetRecharges(cardId: number){
+export async function UnlockCard(
+  number: string){
+    
+  const result = await connection.query(
+    `
+    UPDATE cards 
+    SET "isBlocked" = false
+    WHERE number = $1
+    `, [number]
+  )
+  return result
+}
+
+export async function GetRecharges(
+  cardId: number){
   const rechargesData = await connection.query(
     `
     SELECT r.id, r."cardId", r.timestamp, r.amount
@@ -108,7 +101,8 @@ export async function GetRecharges(cardId: number){
   return rechargesData.rows
 }
 
-export async function GetTransaction(cardId: number){
+export async function GetTransaction(
+  cardId: number){
   const transactionsData = await connection.query(
     `
     SELECT p.id, p."cardId", p."businessId",
@@ -125,7 +119,8 @@ export async function GetTransaction(cardId: number){
   return transactionsData.rows
 }
 
-export async function GetBalance(cardId: number){
+export async function GetBalance(
+  cardId: number){
   const balance = await connection.query(
     `
     SELECT (SELECT COALESCE(SUM(amount),0) 
@@ -140,24 +135,44 @@ export async function GetBalance(cardId: number){
   return balance.rows[0]
 }
 
-export async function BlockCard(number: string){
-  const result = await connection.query(
+export async function SearchCardByNumber(
+	number: string){
+
+	const result = await connection.query(
     `
-    UPDATE cards 
-    SET "isBlocked" = true
-    WHERE number = $1
-    `, [number]
+    SELECT * FROM cards 
+    WHERE number = $1    
+    `,[number]
   )
-  return result
+	
+  return result.rows[0]
 }
 
-export async function UnlockCard(number: string){
+export async function SearchCardById(
+	id: number){
+
+	const result = await connection.query(
+    `
+    SELECT * FROM cards 
+    WHERE id = $1    
+    `,[id]
+  )
+	
+  return result.rows[0]
+}
+
+export async function SeachEmployeeCardByType(
+  employeeId: number, 
+  typeCard: TransactionTypes){
+
   const result = await connection.query(
     `
-    UPDATE cards 
-    SET "isBlocked" = false
-    WHERE number = $1
-    `, [number]
+      SELECT * FROM cards c
+      JOIN employees e
+      ON e.id = c."employeeId"
+      WHERE e.id = $1 AND c.type = $2         
+    `, [employeeId, typeCard]
   )
-  return result
+
+  return result.rows[0];
 }
