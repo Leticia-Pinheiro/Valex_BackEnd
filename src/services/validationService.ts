@@ -1,6 +1,7 @@
 import * as cardsRepository from "../repositories/cardsRepository"
 import * as employeesRepository from "../repositories/employeesRepository"
 import * as companiesRepository from "../repositories/companiesRepository"
+import * as businessRepository from "../repositories/businessRepository"
 import { TransactionTypes } from "../utils/types"
 import AppError from "../utils/error"
 import Cryptr from "cryptr"
@@ -99,6 +100,26 @@ export async function ValidateToCreateRecharge(
 	
 }
 
+export async function ValidateToCreatePayment(
+	number: string, 
+    informedPassword: string, 
+    businessName: string, 
+    amount: number){
+
+	const cardData = await ValidateCardByNumber(number)
+	const cardId = cardData.id
+	await ValidateToBlockCard(cardData.isBlocked)
+	await ValidateCardExpirationDate(cardData.expirationDate)
+	await ValidateCardPassword(informedPassword, cardData.password)
+
+	const businessData = await ValidateBusinessByName(businessName)
+	const businessId = businessData.id
+	await ValidateTypeBusiness(businessData.type, cardData.type)
+	await ValidateAmountPayment(amount, cardData.id)
+
+	return { cardId, businessId }
+}
+
 //-----------------------------------------------------------------
 
 export async function ValidateCompanyApiKey(
@@ -171,7 +192,7 @@ export async function ValidateCardByNumber(
 			404,
 			"Card not found",
 			"Ensure to provide the correct card informations"
-		);
+		)
 	}
 
 	return cardData
@@ -263,6 +284,53 @@ export async function ValidateCardPassword(
 			404,
 			"Incorrect password",
 			"Ensure to provide the correct card informations"
+		)
+	}
+}
+
+export async function ValidateBusinessByName(
+	businessName: string){
+
+	const businessData = await businessRepository.SearchBusinessByName(businessName)
+
+	if(!businessData){
+		throw new AppError(
+			"Business not found",
+			404,
+			"Business not found",
+			"Ensure to provide the correct business informations"
+		)
+	}
+
+	return businessData
+}
+
+export async function ValidateTypeBusiness(
+	typeBusiness: string,
+	typeCard: string){
+
+	if(typeCard !== typeBusiness){
+		throw new AppError(
+			"Incorrect type",
+			404,
+			"Incorrect type",
+			"It is not possible to use the card in this place"
+		);
+	}
+}
+
+export async function ValidateAmountPayment(
+	amount: number,
+	cardId: number){
+
+	const { balance } = await cardsRepository.GetBalance(cardId)
+
+	if(amount > balance){
+		throw new AppError(
+			"Insufficient balance",
+			404,
+			"Insufficient balance",
+			"Insufficient balance for this payment"
 		);
 	}
 }
