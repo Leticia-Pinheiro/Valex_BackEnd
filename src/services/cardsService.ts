@@ -2,9 +2,9 @@ import * as cardsRepository from "../repositories/cardsRepository"
 import * as validationService from "./validationService"
 import { TransactionTypes , Card } from "../utils/types"
 import { faker } from "@faker-js/faker"
-import Cryptr from "cryptr"
 import dayjs from "dayjs"
 import customParseFormat from "dayjs/plugin/customParseFormat.js"
+import { EncryptData, DecryptData } from "../utils/cryptr"
 dayjs.extend(customParseFormat)
 
 
@@ -15,10 +15,10 @@ export async function CreateCard(
     
     const { fullName } = await validationService.ValidateToCreateCard(companyApiKey, employeeId, typeCard)     
     
-    const { cardCvv } = CreateCardSecurityCode()
     const cardData = GenerateCardData(employeeId, fullName, typeCard)
-    const { number, cardholderName, cardExpirationDate, type } = cardData
+    const { number, cardholderName, cardExpirationDate, type, securityCode} = cardData
     await cardsRepository.CreateCard(cardData)
+    const cardCvv : string = DecryptData(securityCode) 
 
     return {
         number,
@@ -35,7 +35,7 @@ export function GenerateCardData(
     typeCard: TransactionTypes){
 
     const cardNumber = CreateCardNumber()
-    const { securityCode } =  CreateCardSecurityCode()
+    const securityCode =  CreateCardSecurityCode()
     const cardholderName = CreateCardholderName(fullName)
     const cardExpirationDate = CreateCardExpirationDate()
     const cardData : Card = { 
@@ -57,10 +57,9 @@ export function CreateCardNumber(){
 }
 
 export function CreateCardSecurityCode(){    
-    const cardCvv : string = faker.finance.creditCardCVV() 
-    const cryptr = new Cryptr("SecretKey")            
-    const securityCode: string = cryptr.encrypt(cardCvv)
-    return { cardCvv , securityCode }
+    const cardCvv : string = faker.finance.creditCardCVV()     
+    const securityCode : string = EncryptData(cardCvv)
+    return  securityCode 
 }
 
 export function CreateCardholderName(
@@ -108,9 +107,8 @@ export async function ActivateCard(
     password : string){
 
     await validationService.ValidateToActivateCard(number, securityCode)
-
-    const cryptr = new Cryptr("SecretKey")    
-    const passwordCrypt: string = cryptr.encrypt(password)
+    
+    const passwordCrypt: string = EncryptData(password)
 
     await cardsRepository.ActivateCard(number, passwordCrypt)
 

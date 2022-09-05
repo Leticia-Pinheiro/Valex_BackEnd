@@ -4,8 +4,7 @@ import * as companiesRepository from "../repositories/companiesRepository"
 import * as businessRepository from "../repositories/businessRepository"
 import { TransactionTypes } from "../utils/types"
 import AppError from "../utils/error"
-import Cryptr from "cryptr"
-
+import { DecryptData } from "../utils/cryptr"
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 
@@ -30,8 +29,7 @@ export async function ValidateToCreateCard(
 export async function ValidateToActivateCard(
 	number: string,
 	securityCode: string){
-
-	console.log(securityCode) //tirar
+	
 	const cardData = await ValidateCardByNumber(number)
 	await ValidateCardSecurityCode(securityCode, cardData.securityCode)
 	await ValidateCardHasPassword(cardData.password)
@@ -202,9 +200,7 @@ export async function ValidateCardSecurityCode(
 	securityCode: string,
 	cardSecurityCode: string){
 
-	const cryptr = new Cryptr("SecretKey");    
-    const securityCodeDecrypt: string = cryptr.decrypt(cardSecurityCode)
-	console.log(securityCodeDecrypt) //tirar
+	const securityCodeDecrypt: string = DecryptData(cardSecurityCode)	
 
 	if(securityCode !== securityCodeDecrypt){		
 		throw new AppError(
@@ -273,10 +269,8 @@ export async function ValidateCardById(
 export async function ValidateCardPassword(
 	informedPassword: string, 
 	password: string ){
-
-	const cryptr = new Cryptr("SecretKey");    
-    const passwordDecrypt: string = cryptr.decrypt(password)
-	console.log(passwordDecrypt) //tirar
+	
+	const passwordDecrypt: string = DecryptData(password)	
 
 	if(informedPassword !== passwordDecrypt){		
 		throw new AppError(
