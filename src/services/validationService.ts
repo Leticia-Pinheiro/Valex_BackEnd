@@ -4,10 +4,10 @@ import * as companiesRepository from "../repositories/companiesRepository"
 import * as businessRepository from "../repositories/businessRepository"
 import { TransactionTypes } from "../utils/types"
 import { DecryptData } from "../utils/cryptr"
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat.js";
+import dayjs from "dayjs"
+import customParseFormat from "dayjs/plugin/customParseFormat.js"
 
-dayjs.extend(customParseFormat);
+dayjs.extend(customParseFormat)
 
 export async function ValidateToCreateCard(
 	companyApiKey: string, 
