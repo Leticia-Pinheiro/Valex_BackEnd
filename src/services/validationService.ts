@@ -3,7 +3,6 @@ import * as employeesRepository from "../repositories/employeesRepository"
 import * as companiesRepository from "../repositories/companiesRepository"
 import * as businessRepository from "../repositories/businessRepository"
 import { TransactionTypes } from "../utils/types"
-import AppError from "../utils/error"
 import { DecryptData } from "../utils/cryptr"
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
@@ -52,12 +51,7 @@ export async function ValidateToBlockCard(
 	isBlocked: boolean){
 
 	if(isBlocked === true){
-		throw new AppError(
-			"Blocked Card",
-			409,
-			"Blocked Card",
-			"Card has already been blocked"
-		);
+		throw { code: "Conflict", message: "Card is already blocked" }		
 	}
 }
 
@@ -65,12 +59,7 @@ export async function ValidateToUnlockCard(
 	isBlocked: boolean){
 		
 	if(isBlocked === false){
-		throw new AppError(
-			"Unlocked Card",
-			409,
-			"Unlocked Card",
-			"Card has already been unlocked"
-		);
+		throw { code: "Conflict", message: "Card is already unlocked" }	
 	}
 }
 
@@ -124,14 +113,11 @@ export async function ValidateCompanyApiKey(
 	companyApiKey : string){
 
     const result = await companiesRepository.SeachCompanyByApiKey(companyApiKey)
+
 	if (!result) {
-		throw new AppError(
-			"Company not found",
-			404,
-			"Company not found with API key",
-			"Ensure to provide the correct API key"
-		);
+		throw { code: "Not Found", message: "Company Not Found" }	
 	}
+	
 	return result;
 }
 
@@ -140,12 +126,7 @@ export async function ValidateEmployeeId(
 
     const result = await employeesRepository.SeachEmployeeById(employeeId)
     if (!result) {
-		throw new AppError(
-			"Employee not found",
-			404,
-			"Employee not found with id",
-			"Ensure to provide the correct employee id"
-		);
+		throw { code: "Not Found", message: "Employee Not Found"}	
 	}
 	return result;
 }
@@ -155,12 +136,7 @@ export async function ValidateCompanyRegisteredEmployee(
 	companyId: number){
 		
     if (id !== companyId){
-        throw new AppError(
-			"Unregistered employee",
-			404,
-			"Unregistered employee",
-			"Inform a valid company employee"
-		);
+        throw { code: "Not Found", message: "Employee Not Found"}
     }
 }
 
@@ -170,12 +146,7 @@ export async function ValidateEmployeeHasTypeCard(
 
     const result = await cardsRepository.SeachEmployeeCardByType(employeeId, typeCard)
     if (result) {
-		throw new AppError(
-			"Invalid Type Card",
-			404,
-			"Invalid Type Card",
-			"Employee already has this type of card"
-		);
+		throw { code: "Conflict", message: "Employee already has this type of card"}		
 	}	
 }
 
@@ -185,12 +156,7 @@ export async function ValidateCardByNumber(
 	const cardData = await cardsRepository.SearchCardByNumber(number)
 	
 	if(!cardData){
-		throw new AppError(
-			"Card not found",
-			404,
-			"Card not found",
-			"Ensure to provide the correct card informations"
-		)
+		throw { code: "Not Found", message: "Card not found"}
 	}
 
 	return cardData
@@ -203,12 +169,7 @@ export async function ValidateCardSecurityCode(
 	const securityCodeDecrypt: string = DecryptData(cardSecurityCode)	
 
 	if(securityCode !== securityCodeDecrypt){		
-		throw new AppError(
-			"Incorrect security code",
-			404,
-			"Incorrect security code",
-			"Ensure to provide the correct card informations"
-		);
+		throw { code: "Unauthorized", message: "Invalid security code"}
 	}
 }
 
@@ -216,12 +177,7 @@ export async function ValidateCardHasPassword(
 	password: string){
 
 	if (password){
-		throw new AppError(
-			"Card already activated",
-			404,
-			"Card already activated",
-			"Card has already been activated"
-		);
+		throw { code: "Conflict", message: "Activated card"}		
 	}
 }
 
@@ -229,12 +185,7 @@ export async function ValidateCardHasNoPassword(
 	password: string){
 
 	if(!password){
-		throw new AppError(
-			"Incorrect password",
-			404,
-			"Incorrect password",
-			"Ensure to provide the correct card informations"
-		);
+		throw { code: "Not Found", message: "Deactivated card"}		
 	}
 }
 
@@ -242,12 +193,7 @@ export async function ValidateCardExpirationDate(
 	expirationDate: string){
 
 	if(dayjs(new Date()).isAfter(dayjs(expirationDate, "MM/YY"))){
-		throw new AppError(
-			"Card expired",
-			409,
-			"This card has expired",
-			"Ensure to provide a valid card ID"
-		);
+		throw { code: "Unauthorized", message: "Expired card"}		
 	}
 }
 
@@ -257,12 +203,7 @@ export async function ValidateCardById(
 	const cardData = await cardsRepository.SearchCardById(cardId)
 
 	if(!cardData){
-		throw new AppError(
-			"Card not found",
-			404,
-			"Card not found",
-			"Ensure to provide the correct card informations"
-		);
+		throw { code: "Not Found", message: "Card not found"}
 	}	
 }
 
@@ -273,12 +214,7 @@ export async function ValidateCardPassword(
 	const passwordDecrypt: string = DecryptData(password)	
 
 	if(informedPassword !== passwordDecrypt){		
-		throw new AppError(
-			"Incorrect password",
-			404,
-			"Incorrect password",
-			"Ensure to provide the correct card informations"
-		)
+		throw { code: "Unauthorized", message: "Incorrect password"}
 	}
 }
 
@@ -288,12 +224,7 @@ export async function ValidateBusinessByName(
 	const businessData = await businessRepository.SearchBusinessByName(businessName)
 
 	if(!businessData){
-		throw new AppError(
-			"Business not found",
-			404,
-			"Business not found",
-			"Ensure to provide the correct business informations"
-		)
+		throw { code: "Not Found", message: "Business not found"}
 	}
 
 	return businessData
@@ -304,12 +235,7 @@ export async function ValidateTypeBusiness(
 	typeCard: string){
 
 	if(typeCard !== typeBusiness){
-		throw new AppError(
-			"Incorrect type",
-			404,
-			"Incorrect type",
-			"It is not possible to use the card in this place"
-		);
+		throw { code: "Unauthorized", message: "Card not allowed"}
 	}
 }
 
@@ -320,11 +246,6 @@ export async function ValidateAmountPayment(
 	const { balance } = await cardsRepository.GetBalance(cardId)
 
 	if(amount > balance){
-		throw new AppError(
-			"Insufficient balance",
-			404,
-			"Insufficient balance",
-			"Insufficient balance for this payment"
-		);
+		throw { code: "Unauthorized", message: "Insufficient funds"}
 	}
 }

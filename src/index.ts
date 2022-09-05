@@ -10,7 +10,7 @@ const app = express()
 app.use(cors())
 app.use(json())
 app.use(router)
-app.use(errorHandler);
+app.use(errorHandler)
 
 const PORT : number = Number(process.env.PORT) || 5009
 app.listen(PORT, () => 

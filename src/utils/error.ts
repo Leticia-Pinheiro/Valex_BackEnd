@@ -1,20 +1,12 @@
-class AppError {
-	log: string
-	statusCode: number
-	message: string
-	detail: string
-
-	constructor(
-		log: string = "Something went wrong",
-		statusCode: number = 400,
-		message: string = "Something went wrong",
-		detail: string = "An unexpected error occurred"
-	) {
-		this.log = log
-		this.statusCode = statusCode
-		this.message = message
-		this.detail = detail
+class AppError extends Error {
+	code: string;
+	message: string;
+	constructor(code: string, message: string) {
+	  super(message);
+	  this.code = code;
+	  this.message = message;
 	}
-}
+  }
+  
+  export default AppError;
 
-export default AppError;
