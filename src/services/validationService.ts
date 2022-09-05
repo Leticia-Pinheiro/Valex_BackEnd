@@ -81,6 +81,24 @@ export async function ValidateToGetTransactions(
 	await ValidateCardById(cardId)
 }
 
+export async function ValidateToCreateRecharge(
+	companyApiKey: string, 
+	number: string){
+
+	const cardData = await ValidateCardByNumber(number)	
+	const { id } 
+	: { id : number} = await ValidateCompanyApiKey(companyApiKey)
+	const { companyId } 
+	: {companyId : number} = await ValidateEmployeeId(cardData.employeeId)
+
+	await ValidateCompanyRegisteredEmployee(id, companyId)
+	await ValidateToBlockCard(cardData.isBlocked)
+	await ValidateCardExpirationDate(cardData.expirationDate)
+
+	return cardData
+	
+}
+
 //-----------------------------------------------------------------
 
 export async function ValidateCompanyApiKey(
