@@ -3,7 +3,7 @@ A Typescript designed project to manage benefit cards among companies and employ
 
 
 <p align="center">
-  <img  src="https://cdn.iconscout.com/icon/free/png-256/credit-card-2650080-2196542.png">
+  <img height=300 src="https://cdn.iconscout.com/icon/free/png-256/credit-card-2650080-2196542.png">
 </p>
 <h1 align="center">
   Valex
