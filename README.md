@@ -1,4 +1,4 @@
-# projeto18-valex
+# Valex
 A Typescript designed project to manage benefit cards among companies and employees
 
 
